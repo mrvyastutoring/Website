@@ -851,11 +851,11 @@
           <div class="field-row">
             <div>
               <label for="parent-name">Your name</label>
-              <input id="parent-name" type="text" required>
+              <input id="parent-name" name="name" type="text" required>
             </div>
             <div>
               <label for="student-year">Student's year group</label>
-              <select id="student-year">
+              <select id="student-year" name="year_group">
                 <option>Year 7</option>
                 <option>Year 8</option>
                 <option>Year 9</option>
@@ -867,14 +867,16 @@
           </div>
           <div>
             <label for="email">Email address</label>
-            <input id="email" type="email" required>
+            <input id="email" name="email" type="email" required>
           </div>
           <div>
             <label for="message">What would you like help with?</label>
-            <textarea id="message" placeholder="E.g. currently a grade 5, aiming for a 7, struggling with algebra."></textarea>
+            <textarea id="message" name="message" placeholder="E.g. currently a grade 5, aiming for a 7, struggling with algebra."></textarea>
           </div>
-          <p class="form-note">This opens your email app with the message ready to send to Mr Vyas.</p>
-          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Send message</button>
+          <input type="hidden" name="_subject" value="New tutoring enquiry from the website">
+          <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+          <p class="form-note" id="form-note">I'll reply within 24 hours to arrange a free 15-minute call.</p>
+          <button type="submit" class="btn btn-primary" id="form-submit-btn" style="align-self:flex-start;">Send message</button>
         </form>
       </div>
     </div>
@@ -902,26 +904,36 @@
 
   const tutoringForm = document.getElementById('tutoring-form');
   if (tutoringForm) {
+    const formNote = document.getElementById('form-note');
+    const submitBtn = document.getElementById('form-submit-btn');
+    const defaultNote = formNote.textContent;
+
     tutoringForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      const name = document.getElementById('parent-name').value;
-      const year = document.getElementById('student-year').value;
-      const email = document.getElementById('email').value;
-      const message = document.getElementById('message').value;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
 
-      const subject = 'Tutoring enquiry from ' + name;
-      const body =
-        'Name: ' + name + '\n' +
-        'Student year group: ' + year + '\n' +
-        'Reply-to email: ' + email + '\n\n' +
-        'Message:\n' + message;
-
-      const mailtoLink =
-        'mailto:mrvyastutoring@gmail.com' +
-        '?subject=' + encodeURIComponent(subject) +
-        '&body=' + encodeURIComponent(body);
-
-      window.location.href = mailtoLink;
+      fetch('https://formsubmit.co/ajax/mrvyastutoring@gmail.com', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new FormData(tutoringForm)
+      })
+        .then(function (response) {
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.json();
+        })
+        .then(function () {
+          tutoringForm.reset();
+          formNote.textContent = "Thanks — your message has been sent. I'll reply within 24 hours.";
+          formNote.style.color = 'var(--red-pen)';
+          submitBtn.textContent = 'Sent';
+        })
+        .catch(function () {
+          formNote.textContent = "Something went wrong sending that — please email mrvyastutoring@gmail.com directly.";
+          formNote.style.color = 'var(--red-pen)';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send message';
+        });
     });
   }
 </script>
